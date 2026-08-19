@@ -1,0 +1,111 @@
+{
+  "$schema": "../test-plan.schema.json",
+  "version": 1,
+  "change_id": "production-scale-ci-capabilities",
+  "summary": "Generalize proven production reporting, browser smoke, E2E coverage, and incremental mutation capabilities.",
+  "behaviors": [
+    {
+      "id": "portable-ci-evidence",
+      "description": "Generate and validate portable JUnit, JSON, HTML, LCOV, and Cobertura evidence for CI test layers.",
+      "risk": "high",
+      "source": [
+        "package.json",
+        "scripts/run-ci-unit.mjs",
+        "playwright.config.ts",
+        ".github/workflows/ci.yml"
+      ],
+      "required_tests": {
+        "unit": false,
+        "storybook": false,
+        "mutation": false,
+        "e2e": false
+      },
+      "evidence": {
+        "unit": [],
+        "storybook": [],
+        "mutation": [],
+        "e2e": []
+      },
+      "commands": ["pnpm ci:test", "pnpm ci:test:stories", "pnpm test:e2e:pr"]
+    },
+    {
+      "id": "storybook-static-smoke",
+      "description": "Enumerate every built Storybook story and fail when an isolated iframe cannot render meaningful content.",
+      "risk": "high",
+      "source": [
+        "playwright.storybook.config.ts",
+        "e2e/storybook-smoke.spec.ts",
+        "scripts/static-server.mjs",
+        ".github/workflows/ci.yml"
+      ],
+      "required_tests": {
+        "unit": false,
+        "storybook": false,
+        "mutation": false,
+        "e2e": false
+      },
+      "evidence": {
+        "unit": [],
+        "storybook": [],
+        "mutation": [],
+        "e2e": []
+      },
+      "commands": ["pnpm build-storybook", "pnpm test:storybook-smoke"]
+    },
+    {
+      "id": "e2e-coverage-evidence",
+      "description": "Instrument an explicit non-production build and merge Playwright worker coverage into portable reports.",
+      "risk": "high",
+      "source": [
+        "vite.config.ts",
+        "e2e/coverage-fixture.ts",
+        "scripts/e2e-coverage.mjs",
+        "scripts/e2e-coverage.test.mjs",
+        ".github/workflows/e2e-nightly.yml"
+      ],
+      "required_tests": {
+        "unit": false,
+        "storybook": false,
+        "mutation": false,
+        "e2e": false
+      },
+      "evidence": {
+        "unit": [],
+        "storybook": [],
+        "mutation": [],
+        "e2e": []
+      },
+      "commands": ["pnpm test:impact:self", "pnpm test:e2e:coverage"],
+      "notes": [
+        "The deploy workflow continues to promote the normal non-instrumented app-dist artifact."
+      ]
+    },
+    {
+      "id": "changed-line-mutation",
+      "description": "Mutate only changed executable source ranges on pull requests while retaining full scheduled mutation testing.",
+      "risk": "high",
+      "source": [
+        "scripts/stryker-incremental.mjs",
+        "scripts/stryker-incremental.test.mjs",
+        ".github/workflows/ci.yml",
+        ".github/workflows/mutation.yml"
+      ],
+      "required_tests": {
+        "unit": false,
+        "storybook": false,
+        "mutation": false,
+        "e2e": false
+      },
+      "evidence": {
+        "unit": [],
+        "storybook": [],
+        "mutation": [],
+        "e2e": []
+      },
+      "commands": [
+        "pnpm test:impact:self",
+        "pnpm test:mutation:changed -- --base <base-sha> --head <head-sha>"
+      ]
+    }
+  ]
+}
