@@ -65,7 +65,8 @@ export function UserProfile({ userId }: UserProfileProps) {
   return (
     <article aria-labelledby="user-name">
       <h2 id="user-name">{visibleState.user.name}</h2>
-      <p>{visibleState.user.role}</p>
+      <p>Role: {visibleState.user.role}</p>
+      <p>Profile ID: {visibleState.user.id}</p>
       <button type="button" onClick={reload}>
         Refresh
       </button>
