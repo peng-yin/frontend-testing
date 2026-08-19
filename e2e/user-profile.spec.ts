@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./coverage-fixture";
 
 test("loads and refreshes a user profile", async ({ page }) => {
   let requestCount = 0;
