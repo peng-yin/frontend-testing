@@ -24,7 +24,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm test:mutation
+      - run: pnpm test:mutation:full
       - name: Upload mutation report
         if: always()
         uses: actions/upload-artifact@v7

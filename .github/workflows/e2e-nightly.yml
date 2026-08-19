@@ -27,9 +27,19 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Clean E2E coverage workspace
+        if: matrix.browser == 'chromium'
+        run: node scripts/e2e-coverage.mjs clean
       - run: pnpm build
+        env:
+          TEST_E2E_COVERAGE: ${{ matrix.browser == 'chromium' && '1' || '0' }}
       - run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
       - run: pnpm exec playwright test --project=${{ matrix.browser }}
+        env:
+          TEST_E2E_COVERAGE: ${{ matrix.browser == 'chromium' && '1' || '0' }}
+      - name: Generate Chromium E2E coverage reports
+        if: always() && matrix.browser == 'chromium'
+        run: node scripts/e2e-coverage.mjs report
       - name: Upload browser diagnostics
         if: always()
         uses: actions/upload-artifact@v7
@@ -38,5 +48,6 @@ jobs:
           path: |
             artifacts/playwright-report
             artifacts/playwright-results
+            artifacts/e2e-coverage/report
           if-no-files-found: ignore
           retention-days: 14

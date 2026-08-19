@@ -57,13 +57,14 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm test:coverage
-      - name: Upload coverage report
+      - run: pnpm ci:test
+      - name: Upload unit test evidence
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: coverage
-          path: artifacts/coverage
+          name: unit-test-evidence
+          path: artifacts/unit
+          if-no-files-found: error
           retention-days: 14
 
   storybook:
@@ -78,15 +79,56 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm test:stories
+      - run: pnpm ci:test:stories
       - run: pnpm build-storybook
-      - name: Upload Storybook
+      - run: pnpm test:storybook-smoke
+      - name: Upload Storybook and browser evidence
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: storybook
-          path: storybook-static
+          name: storybook-evidence
+          path: |
+            storybook-static
+            artifacts/storybook
+            artifacts/storybook-smoke
+          if-no-files-found: error
           retention-days: 14
+
+  mutation:
+    name: Changed-line mutation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Mutate changed executable lines
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+        run: >-
+          pnpm test:mutation:changed --
+          --base "$BASE_SHA"
+          --head "$HEAD_SHA"
+      - name: Publish mutation summary
+        if: always()
+        run: |
+          if test -s artifacts/stryker/incremental/summary.md; then
+            cat artifacts/stryker/incremental/summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload incremental mutation evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: incremental-mutation-evidence
+          path: artifacts/stryker/incremental
+          if-no-files-found: error
+          retention-days: 30
 
   build:
     name: Production build
@@ -139,7 +181,7 @@ jobs:
   quality-gate:
     name: Quality gate
     if: always()
-    needs: [static, unit, storybook, build, e2e]
+    needs: [static, unit, storybook, mutation, build, e2e]
     runs-on: ubuntu-latest
     steps:
       - name: Require every PR gate
@@ -147,11 +189,13 @@ jobs:
           STATIC_RESULT: ${{ needs.static.result }}
           UNIT_RESULT: ${{ needs.unit.result }}
           STORYBOOK_RESULT: ${{ needs.storybook.result }}
+          MUTATION_RESULT: ${{ needs.mutation.result }}
           BUILD_RESULT: ${{ needs.build.result }}
           E2E_RESULT: ${{ needs.e2e.result }}
         run: |
           test "$STATIC_RESULT" = success
           test "$UNIT_RESULT" = success
           test "$STORYBOOK_RESULT" = success
+          test "$MUTATION_RESULT" = success
           test "$BUILD_RESULT" = success
           test "$E2E_RESULT" = success
