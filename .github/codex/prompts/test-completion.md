@@ -11,18 +11,24 @@ Follow this sequence:
 2. Inspect the full diff between `BASE_SHA` and `HEAD_SHA`.
 3. Create or update `.testing/plans/pr-${PR_NUMBER}.json`.
 4. Map every policy-classified source file to one or more observable behaviors.
-5. For each affected module, complete the three-stage loop:
-   - Vitest + Testing Library + MSW coverage and assertions;
-   - Storybook stories, `play()` interaction tests and accessibility states;
-   - scoped Stryker analysis and assertions that kill non-equivalent survivors.
-6. Add Playwright E2E only for policy-required critical journeys.
+5. For each affected behavior, choose the lowest stable layer that can prove it, then obey
+   every additional layer required by the policy:
+   - pure logic, Hooks, stores and API branches: Vitest + Testing Library/MSW as applicable;
+   - visible component states, browser interaction and accessibility: Storybook stories
+     and `play()` assertions;
+   - routes, authentication, permissions and cross-page production journeys: Playwright;
+   - critical executable logic: scoped Stryker analysis and stronger assertions for
+     non-equivalent survivors.
+6. For bug fixes, add a failing regression test at the lowest reproducing layer before
+   modifying the implementation. Do not create a higher-layer duplicate merely to fill a
+   test category.
 7. Run:
 
    ```bash
    pnpm test:impact -- --working-tree
    pnpm verify
-   pnpm test:mutation
-   pnpm test:e2e:pr
+   pnpm test:mutation     # when required by the plan/policy
+   pnpm test:e2e:pr       # when required by the plan/policy
    ```
 
 8. Fix failures and repeat until every command passes.

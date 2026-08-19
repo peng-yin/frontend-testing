@@ -33,6 +33,26 @@
         "required": ["unit", "e2e"],
       },
       {
+        "id": "critical-flow",
+        "include":
+          [
+            "src/pages/**/*.ts",
+            "src/pages/**/*.tsx",
+            "src/routes/**/*.ts",
+            "src/routes/**/*.tsx",
+            "src/router/**/*.ts",
+            "src/router/**/*.tsx",
+          ],
+        "exclude":
+          [
+            "**/*.test.ts",
+            "**/*.test.tsx",
+            "**/*.stories.ts",
+            "**/*.stories.tsx",
+          ],
+        "required": ["unit", "storybook", "e2e"],
+      },
+      {
         "id": "source-default",
         "include": ["src/**/*.ts", "src/**/*.tsx"],
         "exclude":
@@ -44,6 +64,9 @@
             "src/mocks/**/*",
             "src/App.tsx",
             "src/main.tsx",
+            "src/pages/**/*",
+            "src/routes/**/*",
+            "src/router/**/*",
           ],
         "required": ["unit", "mutation"],
       },

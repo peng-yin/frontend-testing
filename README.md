@@ -106,6 +106,20 @@ pnpm test:mutation
 单元、Storybook、Playwright 证据默认保留 14 天，变异测试证据保留 30 天。最终
 `Quality gate` 要求静态检查、单元/集成、Storybook、变异、构建和 E2E 全部成功。
 
+### 什么时候补哪种测试
+
+| 变更                       | 最低必要证据                               | 补齐时机                     |
+| -------------------------- | ------------------------------------------ | ---------------------------- |
+| 纯逻辑、Hook、Store、API   | Vitest；核心分支再用 Stryker 验证断言强度  | 与实现同步完成               |
+| 组件状态、交互、a11y       | Testing Library + Storybook `play()`       | 组件可独立渲染后、页面集成前 |
+| 路由、登录、权限、跨页流程 | 单元/组件证据 + Playwright 关键旅程        | 流程稳定后、合并前           |
+| 缺陷修复                   | 最低可复现层的失败回归测试                 | 修改实现前                   |
+| 全浏览器与全量变异         | Playwright 三浏览器 + Stryker 全量关键模块 | main / 夜间                  |
+
+`.testing/policy.yml` 会把变更路径映射为必需测试层，`pnpm test:impact` 校验测试计划和
+同 PR 证据。详细决策表、完成定义和 AI 执行合同见
+[测试归属判定](./TESTING_STRATEGY.md#测试归属判定)。
+
 ## 产物导航
 
 - [BLOG.md](./BLOG.md)：可直接发布的项目介绍与技术实践文章

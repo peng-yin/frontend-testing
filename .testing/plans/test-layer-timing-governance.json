@@ -1,0 +1,63 @@
+{
+  "$schema": "../test-plan.schema.json",
+  "version": 1,
+  "change_id": "test-layer-timing-governance",
+  "summary": "Make test-layer timing and selection enforceable for developers, AI agents and CI.",
+  "behaviors": [
+    {
+      "id": "select-lowest-stable-test-layer",
+      "description": "Select unit, Storybook, mutation and E2E evidence from observable change risk without duplicating assertions at every layer.",
+      "risk": "high",
+      "source": [
+        "README.md",
+        "TESTING_STRATEGY.md",
+        "AGENTS.md",
+        ".github/codex/prompts/test-completion.md",
+        ".github/pull_request_template.md"
+      ],
+      "required_tests": {
+        "unit": false,
+        "storybook": false,
+        "mutation": false,
+        "e2e": false
+      },
+      "evidence": {
+        "unit": [],
+        "storybook": [],
+        "mutation": [],
+        "e2e": []
+      },
+      "commands": [
+        "pnpm test:impact:self",
+        "pnpm test:impact -- --working-tree",
+        "pnpm verify"
+      ]
+    },
+    {
+      "id": "enforce-critical-flow-e2e",
+      "description": "Require unit, Storybook and Playwright evidence for changed page and route flows while keeping logic-only changes below E2E.",
+      "risk": "critical",
+      "source": [".testing/policy.yml", "scripts/test-impact.test.mjs"],
+      "required_tests": {
+        "unit": false,
+        "storybook": false,
+        "mutation": false,
+        "e2e": false
+      },
+      "evidence": {
+        "unit": [],
+        "storybook": [],
+        "mutation": [],
+        "e2e": []
+      },
+      "commands": [
+        "pnpm test:impact:self",
+        "pnpm test:impact -- --working-tree",
+        "pnpm verify"
+      ],
+      "notes": [
+        "Policy infrastructure is verified by deterministic Node self-tests rather than product-layer tests."
+      ]
+    }
+  ]
+}

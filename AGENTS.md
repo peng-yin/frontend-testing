@@ -10,10 +10,13 @@ These instructions apply to every requirement or behavior change in this reposit
 3. Create or update `.testing/plans/<change-id>.json`. Every changed file classified by
    the policy must be mapped to at least one behavior.
 4. Work on one affected module at a time:
-   - add or update Vitest + Testing Library + MSW tests;
-   - add or update Storybook stories, `play()` interactions and accessibility states;
-   - run Stryker and add assertions for surviving non-equivalent mutants;
-   - add Playwright E2E only for policy-required critical journeys.
+   - pure logic, Hooks, stores and API branches: add Vitest while implementing the logic;
+   - independently renderable UI states or browser interaction: add Storybook stories,
+     `play()` assertions and accessibility checks before page integration;
+   - routes and cross-page critical journeys: add Playwright after the journey stabilizes
+     and before merge;
+   - critical logic: run scoped Stryker and strengthen assertions for surviving
+     non-equivalent mutants.
 5. Run all deterministic verification commands before reporting completion.
 6. Report the behavior-to-test mapping, commands run, results and remaining risks.
 
@@ -24,6 +27,11 @@ These instructions apply to every requirement or behavior change in this reposit
 - Component states, browser interaction and accessibility use Storybook `play()`.
 - Cross-page or production-build journeys use Playwright.
 - Stryker verifies that unit assertions detect incorrect implementations.
+
+For a bug fix, first add a failing regression test at the lowest layer that can reproduce
+the defect. For a new requirement, select layers by observable risk: pure logic does not
+need a Story or E2E test; component state does not need a duplicate application E2E; a
+route, authentication, permission or cross-page production journey does require E2E.
 
 Do not duplicate the same assertions at every layer. Use the lowest stable layer that can
 prove the behavior, then add higher layers only when the policy requires them.
