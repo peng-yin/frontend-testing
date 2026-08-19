@@ -11,6 +11,8 @@
 - ESLint 10 + Husky + lint-staged + Commitlint
 - GitHub Actions CI、夜间测试与 GitHub Pages CD
 - 基于变更影响的 Codex 自动补测与验证后回写
+- JUnit、JSON、HTML、LCOV、Cobertura 统一测试证据
+- Storybook 静态产物全量冒烟、真实应用 E2E 覆盖率与变更行变异测试
 
 ## 快速运行
 
@@ -27,18 +29,22 @@ pnpm test:e2e:pr
 
 常用命令：
 
-| 目标                     | 命令                                 |
-| ------------------------ | ------------------------------------ |
-| Vitest 监听模式          | `pnpm test`                          |
-| 单元/集成测试            | `pnpm test:unit`                     |
-| 覆盖率门禁               | `pnpm test:coverage`                 |
-| Storybook 浏览器组件测试 | `pnpm test:stories`                  |
-| Storybook UI             | `pnpm storybook`                     |
-| PR 级 Chromium E2E       | `pnpm test:e2e:pr`                   |
-| 全浏览器 E2E             | `pnpm test:e2e`                      |
-| Stryker 变异测试         | `pnpm test:mutation`                 |
-| 需求影响与测试计划门禁   | `pnpm test:impact -- --working-tree` |
-| 本地完整校验             | `pnpm verify`                        |
+| 目标                     | 命令                                                |
+| ------------------------ | --------------------------------------------------- |
+| Vitest 监听模式          | `pnpm test`                                         |
+| 单元/集成测试            | `pnpm test:unit`                                    |
+| 覆盖率门禁               | `pnpm test:coverage`                                |
+| Storybook 浏览器组件测试 | `pnpm test:stories`                                 |
+| Storybook 全量静态冒烟   | `pnpm build-storybook && pnpm test:storybook-smoke` |
+| Storybook UI             | `pnpm storybook`                                    |
+| PR 级 Chromium E2E       | `pnpm test:e2e:pr`                                  |
+| 全浏览器 E2E             | `pnpm test:e2e`                                     |
+| 真实应用 E2E 覆盖率      | `pnpm test:e2e:coverage`                            |
+| Stryker 变异测试         | `pnpm test:mutation`                                |
+| 变更行 Stryker           | `pnpm test:mutation:changed -- --base <ref>`        |
+| CI 单测与标准报告        | `pnpm ci:test`                                      |
+| 需求影响与测试计划门禁   | `pnpm test:impact -- --working-tree`                |
+| 本地完整校验             | `pnpm verify`                                       |
 
 ## 产物导航
 
@@ -48,6 +54,7 @@ pnpm test:e2e:pr
 - [vitest.config.ts](./vitest.config.ts)：jsdom 与 Storybook Browser 双项目
 - [stryker.config.mjs](./stryker.config.mjs)：变异测试配置
 - [playwright.config.ts](./playwright.config.ts)：三浏览器、重试与 Trace
+- [playwright.storybook.config.ts](./playwright.storybook.config.ts)：构建后全量 story 冒烟
 - [.github/workflows/ci.yml](./.github/workflows/ci.yml)：PR 质量门禁
 - [.github/workflows/deploy-pages.yml](./.github/workflows/deploy-pages.yml)：复用已测试制品的 CD
 - [AI_TEST_AUTOMATION.md](./AI_TEST_AUTOMATION.md)：每次需求变更自动补齐测试的安全编排
@@ -73,6 +80,10 @@ Stryker 和 Playwright；所有门禁通过后才通过 GitHub API 写回 PR 分
    Chromium 中执行。
 3. `user-profile.spec.ts` 对生产构建执行 Playwright E2E。
 4. Stryker 修改 API 与组件实现，确认这些测试能真正杀死错误实现。
+
+在 CI 中还会额外生成两类证据：静态 Storybook 的所有 stories 都必须能独立挂载；夜间
+Chromium 会对显式插桩的应用构建采集 `window.__coverage__`，合并多 worker 分片并输出
+HTML、LCOV、JSON 与 Cobertura。部署仍复用正常的、未插桩 `app-dist`，不会发布测试构建。
 
 这套模板刻意不让每一层重复同样的断言：jsdom 覆盖业务分支，Storybook 覆盖组件状态，
 Playwright 只保留跨边界关键路径。

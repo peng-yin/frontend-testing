@@ -157,12 +157,12 @@ PR 阶段：
 
 为可信的同仓库 PR 添加 `ai-test-completion` 标签后，GitHub Actions 会启动 Codex：
 
-| 阶段         | 自动化动作                                         | 输出                       |
-| ------------ | -------------------------------------------------- | -------------------------- |
-| 1. 可信 PR   | 校验作者、同仓库来源和当前分支 SHA                 | 已授权的变更上下文         |
-| 2. Codex 补测 | 分析完整 diff，补测试计划、单测、Story 和必要 E2E | 候选变更包                 |
-| 3. 独立验证  | 执行 Impact、Vitest、Storybook、Stryker、Playwright | 不持有 AI Key 的验证回执   |
-| 4. 受控写回  | 再次校验分支 SHA，通过 GitHub API 写回             | `ai-test-complete` 或诊断信息 |
+| 阶段          | 自动化动作                                          | 输出                          |
+| ------------- | --------------------------------------------------- | ----------------------------- |
+| 1. 可信 PR    | 校验作者、同仓库来源和当前分支 SHA                  | 已授权的变更上下文            |
+| 2. Codex 补测 | 分析完整 diff，补测试计划、单测、Story 和必要 E2E   | 候选变更包                    |
+| 3. 独立验证   | 执行 Impact、Vitest、Storybook、Stryker、Playwright | 不持有 AI Key 的验证回执      |
+| 4. 受控写回   | 再次校验分支 SHA，通过 GitHub API 写回              | `ai-test-complete` 或诊断信息 |
 
 **全部通过 → 写回 PR；任一失败 → `ai-test-failed` + 诊断链接**
 

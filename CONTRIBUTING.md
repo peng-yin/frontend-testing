@@ -35,6 +35,7 @@ pnpm test:e2e:pr
 - 纯函数和业务分支：Vitest 单元测试。
 - React 用户行为与请求状态：Testing Library + MSW。
 - 组件状态、交互和无障碍：Storybook `play()` 测试。
+- 所有 Story 的构建后可挂载性：Storybook 静态冒烟。
 - 跨页面或生产构建关键路径：Playwright E2E。
 - 测试有效性：Stryker 变异测试。
 
@@ -43,11 +44,13 @@ pnpm test:e2e:pr
 ## 质量要求
 
 PR 必须通过需求影响检查、类型检查、ESLint、格式检查、覆盖率、Storybook 浏览器测试、
-生产构建和 Chromium E2E。涉及测试关键逻辑的改动还应手动运行：
+Storybook 静态冒烟、变更行 Stryker、生产构建和 Chromium E2E。涉及测试关键逻辑的改动
+还应手动运行：
 
 ```bash
 pnpm test:mutation
 pnpm test:e2e
+pnpm test:e2e:coverage
 ```
 
 禁止通过增加无意义断言、排除业务文件或降低阈值来绕过质量门禁。

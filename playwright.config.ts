@@ -4,6 +4,7 @@ const isCI = Boolean(process.env.CI);
 
 export default defineConfig({
   testDir: "./e2e",
+  testIgnore: "storybook-smoke.spec.ts",
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 2 : 0,
@@ -20,6 +21,8 @@ export default defineConfig({
           "html",
           { outputFolder: "artifacts/playwright-report", open: "never" },
         ],
+        ["json", { outputFile: "artifacts/playwright-results/results.json" }],
+        ["junit", { outputFile: "artifacts/playwright-results/junit.xml" }],
       ]
     : [["list"], ["html", { outputFolder: "artifacts/playwright-report" }]],
   use: {

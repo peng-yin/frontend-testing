@@ -19,7 +19,8 @@
 flowchart TB
   A["静态层<br/>TypeScript + ESLint + Commitlint"] --> B["逻辑层<br/>Vitest Node/jsdom"]
   B --> C["组件层<br/>Storybook + Vitest Browser + MSW"]
-  C --> D["系统层<br/>Playwright E2E"]
+  C --> S["构建验收层<br/>Storybook Static Smoke"]
+  S --> D["系统层<br/>Playwright E2E"]
   B --> E["强度层<br/>Stryker Mutation"]
   A --> F["生产构建"]
   B --> F
@@ -36,6 +37,7 @@ flowchart TB
 | 纯逻辑单测         | Node                | 算法、解析、状态机、校验器                 | DOM 细节             |
 | 组件集成           | jsdom               | 用户可见行为、表单、Hook、上下文、请求分支 | CSS 布局、浏览器兼容 |
 | Storybook 组件测试 | 真浏览器            | UI 状态目录、交互、可访问性、浏览器 API    | 全站导航与真实后端   |
+| Storybook 静态冒烟 | 静态构建 + Chromium | 枚举全部 story、验证构建后可独立挂载       | 重复 `play()` 断言   |
 | Playwright E2E     | 生产构建 + 真浏览器 | 路由、鉴权、关键业务链、浏览器兼容         | 穷举组件 props       |
 | Stryker            | Vitest              | 检测“有覆盖但无有效断言”                   | 替代功能测试         |
 
@@ -136,6 +138,16 @@ E2E 分为两类并明确命名：
 
 Mocked E2E 不是后端联调证明。真实接口兼容性必须由契约测试或 staging smoke 补足。
 
+### Storybook 静态冒烟与 E2E 覆盖率
+
+`playwright.storybook.config.ts` 与真实应用 `playwright.config.ts` 必须保持分离：前者读取
+构建后的 `index.json`，枚举全部 story 并验证 iframe 能挂载；后者继续访问生产应用入口，
+负责路由和跨页面主流程。静态冒烟不会重新实现 `play()` 中已经存在的交互断言。
+
+真实应用 E2E 覆盖率只在 `TEST_E2E_COVERAGE=1` 时启用 Istanbul 插桩。Playwright fixture
+在页面关闭前读取 `window.__coverage__`，每个 worker 写独立分片，随后生成 HTML、JSON、
+LCOV 与 Cobertura。插桩产物只用于夜间分析；CD 仍部署 CI 生成的正常 `app-dist`。
+
 ### Stryker
 
 行覆盖率只能说明代码被执行，Stryker 检查断言能否识别被修改的错误实现。模板使用独立
@@ -145,6 +157,7 @@ Recharts 也采用独立 Vitest mutation config。
 运行策略：
 
 - PR：仅对核心领域或变更文件按需运行；
+- PR：通过目标分支 merge-base 计算变更行，仅变异新增或修改的可执行源码范围；
 - `main`/夜间：全量关键模块；
 - `coverageAnalysis: 'perTest'`；
 - 开启 incremental 以缩短本地重复运行；
@@ -193,11 +206,12 @@ Stryker 的增量机制会保存前次结果并只重测变化：
 `ci.yml` 将工作拆成并行 Job：
 
 1. Static：TypeScript、ESLint、Prettier、PR commit range 的 Commitlint；
-2. Unit：Vitest + V8 coverage；
-3. Storybook：Chromium component/play/a11y + 静态构建；
+2. Unit：Vitest + V8 coverage，并输出 JUnit/JSON/HTML/LCOV/Cobertura；
+3. Storybook：Chromium component/play/a11y + 静态构建 + 全量 story 冒烟；
 4. Build：生成一次 `dist` 并上传不可变 artifact；
 5. E2E：下载该 `dist`，只跑 Chromium；
-6. Quality gate：汇总所有结果，作为分支保护唯一必选检查。
+6. Mutation：只对当前变更的可执行源码行运行 Stryker；
+7. Quality gate：汇总所有结果，作为分支保护唯一必选检查。
 
 建议 GitHub branch protection：
 
@@ -211,6 +225,7 @@ Stryker 的增量机制会保存前次结果并只重测变化：
 ### 夜间流水线
 
 - `e2e-nightly.yml`：Chromium/Firefox/WebKit 矩阵；
+- Chromium 夜间任务额外生成真实应用 E2E 覆盖率报告；
 - `mutation.yml`：Stryker 全量关键模块；
 - 失败不自动忽略，应通知责任团队并生成可追踪缺陷；
 - flaky 测试最多 quarantine 7 天，必须带 owner、原因和到期日。
