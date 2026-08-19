@@ -105,6 +105,9 @@
       "commands": [
         "pnpm test:impact:self",
         "pnpm test:mutation:changed -- --base <base-sha> --head <head-sha>"
+      ],
+      "notes": [
+        "When repository policy requires browser-only publishing, finish directory-batched uploads with this plan reconciliation so the latest main-branch CI validates the complete registered capability set."
       ]
     }
   ]
